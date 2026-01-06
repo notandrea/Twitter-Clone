@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  tweets    Tweet[]
+  likes     Like[]
+  followers Follows[] @relation("following")
+  following Follows[] @relation("follower")
+  createdAt DateTime @default(now())
+}
+
+model Tweet {
+  id              Int      @id @default(autoincrement())
+  content         String?
+  userId          Int
+  author          User     @relation(fields: [userId], references: [id])
+  likes           Like[]
+  createdAt       DateTime @default(now())
+
+  originalTweetId Int?
+  originalTweet   Tweet?   @relation("RetweetRelation", fields: [originalTweetId], references: [id])
+  
+  retweets        Tweet[]  @relation("RetweetRelation")
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  tweet     Tweet @relation(fields: [tweetId], references: [id]) 
+  tweetId   Int
+
+  @@unique([userId, tweetId]) 
+}
+
+model Follows {
+  follower    User @relation("follower", fields: [followerId], references: [id])
+  followerId  Int
+  following   User @relation("following", fields: [followingId], references: [id])
+  followingId Int
+
+  @@id([followerId, followingId])
+}
